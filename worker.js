@@ -13,7 +13,7 @@ function remoteShellCommand(command) {
 module.exports = {
   init: function (config, job, context, done) {
     done(null, {
-      deploy: function() {
+      deploy: function(io, context) {
         context.comment("deploying!!!");
         console.log("I AM DEPLOYING");
       }
