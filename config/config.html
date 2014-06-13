@@ -1,0 +1,28 @@
+<div id="project_config_deploy" class="well">
+  <fieldset>
+    <legend>Configuration</legend>
+    <label for="user">Deploy User</label>
+    <input type="text" class="span2"
+    name="user" ng-model="config.user">
+    <br>
+    <label for="hosts">Host(s) (one one each line)</label>
+    <textarea type="text" class="span4"
+    name="hosts" ng-model="config.hosts">
+  </fieldset>
+
+  <fieldset>
+    <legend>Customization</legend>
+    <label for="script">Remote Commands</label>
+    <textarea name="script" ng-model="config.script"></textarea>
+  </fieldset>
+  <button class="btn btn-success" ng-click="save()" ng-disabled="saving">Save</button>
+  <button class="btn btn-info" ng-click="help()">Help</button>
+</div>
+
+<div id="deploy_help" class="modal hide fade" role="dialog" aria-hidden="true">
+  <div class="modal-body"> 
+    Ensure that your strider worker(s) have public key ssh access to the deploy host(s). 
+    Your source code will be cloned into the deploy user's home directory.
+    Remote commands execute as the deploy user within the source directory.
+  </div>
+</div>

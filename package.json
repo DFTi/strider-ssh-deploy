@@ -1,0 +1,46 @@
+{
+  "name": "strider-ssh-deploy",
+  "version": "0.0.1",
+  "description": "Plugin for Strider-CD to deploy with SSH",
+  "main": "webapp.js",
+  "scripts": {
+    "test": "mocha -R spec --recursive test",
+    "tdd": "mocha -w -R spec --recursive test",
+    "build": "browserify controller.js -o config/config.js",
+    "watch": "watchify controller.js -o config/config.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DFTi/strider-ssh-deploy.git"
+  },
+  "keywords": [
+    "strider",
+    "ssh",
+    "deploy",
+    "plugin"
+  ],
+  "author": "Keyvan Fatehi <keyvanfatehi@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "lodash": "^2.4.1",
+    "ssh2": "^0.2.25"
+  },
+  "strider": {
+    "type": "job",
+    "id": "ssh_deploy",
+    "title": "SSH Deploy",
+    "worker": "worker.js",
+    "webapp": "webapp.js",
+    "icon": "icon.png",
+    "config": {
+      "controller": "SshDeployController"
+    }
+  },
+  "devDependencies": {
+    "browserify": "^4.1.10",
+    "chai": "^1.9.1",
+    "mocha": "^1.20.1",
+    "sinon-chai": "^2.5.0",
+    "watchify": "^0.10.2"
+  }
+}
