@@ -75,18 +75,19 @@ module.exports = {
         require('npmd-pack')(context.dataDir, {})
         .pipe(fs.createWriteStream(bundlePath))
         .on('finish', function () {
-          context.comment("Created bundle "+bundlePath);
-          var remoteBundlePath = deployHome+'/'+name+'.tar.gz';
-          context.comment('Securely copying bundle to '+remoteBundlePath);
-          client.scp(bundlePath, _.extend({
-            path: remoteBundlePath
-          }, connectOptions), function(err) {
-            if (err) { context.comment(err); return done(-1) }
-            context.comment("Bundle copied to "+remoteBundlePath);
-            done();
+          process.nextTick(function () {
+            context.comment("Created bundle "+bundlePath);
+            var remoteBundlePath = deployHome+'/'+name+'.tar.gz';
+            context.comment('Securely copying bundle to '+remoteBundlePath);
+            client.scp(bundlePath, _.extend({
+              path: remoteBundlePath
+            }, connectOptions), function(err) {
+              if (err) { context.comment(err); return done(-1) }
+              context.comment("Bundle copied to "+remoteBundlePath);
+              done();
+            });
           });
         });
-
       }
     });
   }
