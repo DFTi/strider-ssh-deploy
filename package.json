@@ -22,7 +22,11 @@
   "author": "Keyvan Fatehi <keyvanfatehi@gmail.com>",
   "license": "ISC",
   "dependencies": {
+    "bluebird": "^2.1.1",
     "lodash": "^2.4.1",
+    "npmd-pack": "^1.0.0",
+    "progress-stream": "^0.5.0",
+    "scp2": "^0.1.4",
     "ssh2": "^0.2.25"
   },
   "strider": {

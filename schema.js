@@ -1,11 +1,11 @@
 module.exports = {
-    user: {
+    usernam: {
       type: String,
       default: ''
     },
     hosts: {
-      type: String,
-      default: ''
+      type: Array,
+      default: []
     },
     script: {
       type: String,
