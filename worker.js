@@ -7,13 +7,16 @@ function shellCommand(command) {
 }
 
 function remoteShellCommand(command) {
-  shellCommand(command);
+  return shellCommand(command);
 };
 
 module.exports = {
   init: function (config, job, context, done) {
     done(null, {
-      deploy: remoteShellCommand(config.script),
+      deploy: function() {
+        context.comment("deploying!!!");
+        console.log("I AM DEPLOYING");
+      }
     });
   }
 }
