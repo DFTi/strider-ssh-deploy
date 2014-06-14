@@ -10,8 +10,15 @@ app.controller('SshDeployController', ['$scope', '$http', function ($scope, $htt
       $scope.saving = false;
     });
   };
-  $scope.help = function () {
-    $('#ssh_deploy_help').modal();
+  $scope.removeHost = function (index) {
+    $scope.config.hosts.splice(index, 1);
+    $scope.save();
+  };
+  $scope.addHost = function () {
+    if (!$scope.config.hosts) $scope.config.hosts = [];
+    $scope.config.hosts.push($scope.new_host);
+    $scope.new_host = '';
+    $scope.save();
   };
 }]);
 

@@ -1,5 +1,5 @@
 module.exports = {
-    usernam: {
+    user: {
       type: String,
       default: ''
     },
