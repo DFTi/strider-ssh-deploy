@@ -17,6 +17,14 @@ function shellCommand(command) {
 
 var _ = require('lodash');
 
+var whatIsMyPublicKey = function() {
+  var pubKeyPath = path.join(home, '.ssh', 'id_rsa.pub');
+  if (fs.existsSync(pubKeyPath))
+    return "Your public key on this worker:\n"+fs.readFileSync(pubKeyPath);
+  else
+    return "You do not have a public key on this worker. Expected "+pubKeyPath+" to exist";
+}
+
 var getPrivateKey = function(optionalKey) {
   if (optionalKey) { return optionalKey } else {
     var keyPath = path.join(home, '.ssh', 'id_rsa');
@@ -79,11 +87,16 @@ var goDeploy = function(context, bundlePath, remoteBundlePath, userScript, conne
       });
     }).on('error', function(err) {
       context.comment('Connection :: error :: ' + err);
+      if ( /Authentication failure/.test(err.message) ) {
+        throw new Error("Host "+connectOptions.host+" did not include your public key as an authorized key.\n"+whatIsMyPublicKey());
+      } else 
+        throw err
     }).on('end', function() {
       context.comment('Connection :: end');
     }).on('close', function(had_error) {
       context.comment('Connection :: close');
-      if (had_error) throw new Error("Connection closed with errors")
+      if (!had_error) return resolve();
+      else throw new Error("Connection closed with errors");
     }).connect(connectOptions);
   })
 }
@@ -106,7 +119,6 @@ module.exports = {
         Promise.all(promises).then(function() {
           done(0);
         }).catch(function(err) {
-          context.comment(err.message);
           done(-1);
         })
       })
