@@ -1,3 +1,4 @@
+var Promise = require('bluebird');
 var Connection = require('ssh2');
 var progress = require('progress-stream');
 var fs = require('fs');
@@ -41,68 +42,71 @@ var getConnectionOptions = function(config) {
 var bundler = require('./bundler');
 
 var goDeploy = function(context, bundlePath, remoteBundlePath, userScript, connectOptions) {
-  var pkgPath = '~/package';
-  context.comment("Preparing to deploy...");
-  var conn = new Connection();
-  conn.on('ready', function() {
-    context.comment('Connection :: ready');
-    conn.sftp(function (err, sftp) {
-      if (err) throw err;
-      var writeStream = sftp.createWriteStream(remoteBundlePath);
-      var str = progress({time:100, length: fs.statSync(bundlePath).size});
-      str.on('progress', function (info) { context.comment(info.percentage+"%") });
-      fs.createReadStream(bundlePath).pipe(str)
-      .pipe(writeStream).on('close', function () {
-        context.comment("Replacing "+pkgPath+" with bundle contents");
-        function devnull(str) { return str+' > /dev/null 2>&1' };
-        conn.exec([
-          devnull('rm -rf '+pkgPath+'.previous'),
-          devnull('mv '+pkgPath+' '+pkgPath+'.previous'),
-          devnull('tar -zxf '+remoteBundlePath),
-          shellCommand(userScript)
-        ].join('\n'), function(err, stream) {
-          if (err) throw err;
-          stream.on('end', function() {
-            context.comment('Stream :: EOF');
-          }).on('exit', function(code, signal) {
-            context.comment('Stream :: exit :: code: ' + code + ', signal: ' + signal);
-          }).on('close', function() {
-            context.comment('Stream :: close');
-            conn.end();
-          }).on('data', function(data) {
-            context.out(data);
+  return new Promise(function(resolve, reject) {
+    context.comment('Transferring bundle to '+remoteBundlePath);
+    var pkgPath = '~/package';
+    context.comment("Preparing to deploy...");
+    var conn = new Connection();
+    conn.on('ready', function() {
+      context.comment('Connection :: ready');
+      conn.sftp(function (err, sftp) {
+        if (err) throw err;
+        var writeStream = sftp.createWriteStream(remoteBundlePath);
+        var str = progress({time:100, length: fs.statSync(bundlePath).size});
+        str.on('progress', function (info) { context.comment(info.percentage+"%") });
+        fs.createReadStream(bundlePath).pipe(str)
+        .pipe(writeStream).on('close', function () {
+          context.comment("Replacing "+pkgPath+" with bundle contents");
+          function devnull(str) { return str+' > /dev/null 2>&1' };
+          conn.exec([
+            devnull('rm -rf '+pkgPath+'.previous'),
+            devnull('mv '+pkgPath+' '+pkgPath+'.previous'),
+            devnull('tar -zxf '+remoteBundlePath),
+            shellCommand(userScript)
+          ].join('\n'), function(err, stream) {
+            if (err) throw err;
+            stream.on('end', function() {
+              context.comment('Stream :: EOF');
+            }).on('exit', function(code, signal) {
+              context.comment('Stream :: exit :: code: ' + code + ', signal: ' + signal);
+            }).on('close', function() {
+              context.comment('Stream :: close');
+              conn.end();
+            }).on('data', function(data) {
+              context.out(data);
+            });
           });
         });
       });
-    });
-  }).on('error', function(err) {
-    context.comment('Connection :: error :: ' + err);
-  }).on('end', function() {
-    context.comment('Connection :: end');
-  }).on('close', function(had_error) {
-    context.comment('Connection :: close');
-    done((had_error ? -1 : 0));
-  }).connect(connectOptions);
+    }).on('error', function(err) {
+      context.comment('Connection :: error :: ' + err);
+    }).on('end', function() {
+      context.comment('Connection :: end');
+    }).on('close', function(had_error) {
+      context.comment('Connection :: close');
+      if (had_error) throw new Error("Connection closed with errors")
+    }).connect(connectOptions);
+  })
 }
 
 
 module.exports = {
-  configure: function(config) {
+  configure: function(config, done) {
     var targets = getConnectionOptions(config);
     return function(context, done) {
       var bundle = context.job.project.name.replace('/', '_')+'.tar.gz';
       var bundlePath = '/tmp/'+bundle;
-      var remoteBundlePath = '~/'+bundle;
-
       context.comment("Bundling project...");
-
       bundler.bundleProject(bundlePath, function(progress) {
         context.comment(progress.percentage+"%");
       }, function() {
         context.comment("Created bundle "+bundlePath);
-        _.each(targets, function(ssh) {
-          context.comment('Transferring bundle to '+remoteBundlePath);
-          goDeploy(context, bundlePath, remoteBundlePath, config.script, ssh);
+        Promise.all(_.map(targets, function(sshOpts) {
+          return goDeploy(context, bundlePath, '~/'+bundle, config.script, sshOpts);
+        })).then(function() {
+          done(0);
+        }).catch(function(err) {
+          done(-1);
         })
       })
     }
