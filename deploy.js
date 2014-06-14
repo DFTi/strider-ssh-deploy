@@ -2,10 +2,6 @@ var Promise = require('bluebird');
 var Connection = require('ssh2');
 var progress = require('progress-stream');
 var fs = require('fs');
-var path = require('path');
-var home = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
-
-var userScript = 'ls -lah / && sleep 2 && echo "ok im done" && sleep 1 && echo "just kidding" && ls';
 
 function shellCommand(command) {
   if (!command || !command.replace(/#[^\n]*/g, '').trim().length) return
@@ -16,43 +12,29 @@ function shellCommand(command) {
 }
 
 var _ = require('lodash');
+var keys = require('./keys');
 
-var whatIsMyPublicKey = function() {
-  var pubKeyPath = path.join(home, '.ssh', 'id_rsa.pub');
-  if (fs.existsSync(pubKeyPath))
-    return "Your public key on this worker:\n"+fs.readFileSync(pubKeyPath);
-  else
-    return "You do not have a public key on this worker. Expected "+pubKeyPath+" to exist";
-}
-
-var getPrivateKey = function(optionalKey) {
-  if (optionalKey) { return optionalKey } else {
-    var keyPath = path.join(home, '.ssh', 'id_rsa');
-    if (fs.existsSync(keyPath)) return fs.readFileSync(keyPath);
-    else throw new Error("No private key available!");
-  }
-}
-
-var getConnectionOptions = function(config, privateKey) {
-  if (_.isArray(config.hosts) && config.hosts.length > 0) {
-    return _.map(config.hosts, function(host) {
-      return {
-        host: host,
-        port: 22,
-        username: 'deploy',
-        privateKey: privateKey
-      }
-    });
-  } else throw new Error("Must provide one or more hosts");
+var getConnectionOptions = function(config, callback) {
+  keys.getPrivateKey(config.privateKey, function(err, res) {
+    if (err) return callback(err);
+    else if (_.isArray(config.hosts) && config.hosts.length > 0) {
+      return callback(null, _.map(config.hosts, function(host) {
+        return {
+          host: host,
+          port: 22,
+          username: 'deploy',
+          privateKey: res
+        }
+      }));
+    } else callback(new Error("Must provide one or more hosts"));
+  })
 }
 
 var bundler = require('./bundler');
 
 var goDeploy = function(context, bundlePath, remoteBundlePath, userScript, connectOptions) {
   return new Promise(function(resolve, reject) {
-    context.comment('Transferring bundle to '+remoteBundlePath);
     var pkgPath = '~/package';
-    context.comment("Preparing to deploy...");
     var conn = new Connection();
     conn.on('ready', function() {
       context.comment('Connection :: ready');
@@ -69,7 +51,7 @@ var goDeploy = function(context, bundlePath, remoteBundlePath, userScript, conne
             devnull('rm -rf '+pkgPath+'.previous'),
             devnull('mv '+pkgPath+' '+pkgPath+'.previous'),
             devnull('tar -zxf '+remoteBundlePath),
-            shellCommand(userScript)
+            shellCommand(config.script)
           ].join('\n'), function(err, stream) {
             if (err) throw err;
             stream.on('end', function() {
@@ -88,15 +70,14 @@ var goDeploy = function(context, bundlePath, remoteBundlePath, userScript, conne
     }).on('error', function(err) {
       context.comment('Connection :: error :: ' + err);
       if ( /Authentication failure/.test(err.message) ) {
-        throw new Error("Host "+connectOptions.host+" did not include your public key as an authorized key.\n"+whatIsMyPublicKey());
+        reject(new Error("Host "+connectOptions.host+" did not include your public key as an authorized key.\n"+keys.whatIsMyPublicKey()));
       } else 
-        throw err
+        reject(err);
     }).on('end', function() {
       context.comment('Connection :: end');
     }).on('close', function(had_error) {
       context.comment('Connection :: close');
-      if (!had_error) return resolve();
-      else throw new Error("Connection closed with errors");
+      had_error ? reject() : resolve()
     }).connect(connectOptions);
   })
 }
@@ -105,21 +86,23 @@ var goDeploy = function(context, bundlePath, remoteBundlePath, userScript, conne
 module.exports = {
   configure: function(config, done) {
     return function(context, done) {
-      var targets = getConnectionOptions(config, getPrivateKey(config.privateKey));
-      var bundle = context.job.project.name.replace('/', '_')+'.tar.gz';
-      var bundlePath = '/tmp/'+bundle;
-      context.comment("Bundling project...");
-      bundler.bundleProject(context.dataDir, bundlePath, function(progress) {
-        context.comment(progress.percentage+"%");
-      }, function() {
-        context.comment("Created bundle "+bundlePath);
-        var promises = _.map(targets, function(sshOpts) {
-          return goDeploy(context, bundlePath, '~/'+bundle, config.script, sshOpts);
-        });
-        Promise.all(promises).then(function() {
-          done(0);
-        }).catch(function(err) {
-          done(-1);
+      getConnectionOptions(config, function(err, hosts) {
+        if (err) return done(err);
+        var bundle = context.job.project.name.replace('/', '_')+'.tar.gz';
+        var bundlePath = '/tmp/'+bundle;
+        context.comment("Bundling project...");
+        bundler.bundleProject(context.dataDir, bundlePath, function(progress) {
+          context.comment(progress.percentage+"%");
+        }, function() {
+          context.comment("Created bundle "+bundlePath);
+          var promises = _.map(hosts, function(sshOpts) {
+            return goDeploy(context, bundlePath, '~/'+bundle, config.script, sshOpts);
+          });
+          Promise.all(promises).then(function() {
+            done(0);
+          }).catch(function(err) {
+            done(err);
+          })
         })
       })
     }

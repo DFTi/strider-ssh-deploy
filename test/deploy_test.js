@@ -7,15 +7,18 @@ var Connection = require('ssh2');
 
 var deploy = require('../deploy');
 var bundler = require('../bundler');
+var keys = require('../keys');
 
 describe("deploy", function() {
   var config = null, context = null;
 
   beforeEach(function() {
+    sinon.stub(keys, 'getPrivateKey').yields(null, 'your private key');
     sinon.stub(bundler, 'bundleProject').callsArg(3);
   });
 
   afterEach(function() {
+    keys.getPrivateKey.restore();
     bundler.bundleProject.restore();
   });
 
