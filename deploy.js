@@ -25,8 +25,7 @@ var getPrivateKey = function(optionalKey) {
   }
 }
 
-var getConnectionOptions = function(config) {
-  var privateKey = getPrivateKey(config.privateKey);
+var getConnectionOptions = function(config, privateKey) {
   if (_.isArray(config.hosts) && config.hosts.length > 0) {
     return _.map(config.hosts, function(host) {
       return {
@@ -92,8 +91,9 @@ var goDeploy = function(context, bundlePath, remoteBundlePath, userScript, conne
 
 module.exports = {
   configure: function(config, done) {
-    var targets = getConnectionOptions(config);
     return function(context, done) {
+      var privateKey = getPrivateKey(config.privateKey);
+      var targets = getConnectionOptions(config, privateKey);
       var bundle = context.job.project.name.replace('/', '_')+'.tar.gz';
       var bundlePath = '/tmp/'+bundle;
       context.comment("Bundling project...");
