@@ -1,7 +1,7 @@
 <h3>Configuration</h3>
 <h4>User</h4>
 <p>
-  Specify here the username to use during SSH.
+  Specify which user to login as during SSH.
 </p>
 <input type="text" class="span2" name="user" ng-model="config.user" placeholder="deploy">
 
@@ -28,7 +28,7 @@
 <div class="row-fluid">
   <div class="span12">
     <p class="help-text">
-      Remote commands execute from within the user's home directory.
+      Remote commands execute from within the [[ config.user || "user" ]]'s home directory.
       Your project will have already been copied into the remote host at <code>$HOME/package</code>.
       The previous source code will be saved into <code>$HOME/package.previous</code>.
       Anything older than that will have already been removed.
