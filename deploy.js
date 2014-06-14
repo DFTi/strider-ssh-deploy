@@ -22,7 +22,7 @@ var getConnectionOptions = function(config, callback) {
         return {
           host: host,
           port: 22,
-          username: 'deploy',
+          username: config.username,
           privateKey: res
         }
       }));

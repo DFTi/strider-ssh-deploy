@@ -25,7 +25,7 @@ describe("deploy", function() {
   describe("connect", function() {
     describe("when three hosts configured", function() {
       beforeEach(function() {
-        config = { hosts: ['1'] };
+        config = { hosts: ['1'], username: "test" };
         context = {
           comment:sinon.stub(),
           job: { project: { name: "foo" } }
@@ -40,6 +40,15 @@ describe("deploy", function() {
       });
       it("called thrice", function() {
         expect(Connection.prototype.connect).to.have.been.calledThrice;
+      });
+
+      it("is called with the given username", function() {
+        expect(Connection.prototype.connect).to.have.been.calledWith({
+          host: "1",
+          port: 22,
+          privateKey: "your private key",
+          username: "test"
+        });
       });
     });
   });
