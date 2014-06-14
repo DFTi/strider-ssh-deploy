@@ -22,7 +22,7 @@ var getConnectionOptions = function(config, callback) {
         return {
           host: host,
           port: 22,
-          username: config.username,
+          username: config.user,
           privateKey: res
         }
       }));
@@ -35,7 +35,7 @@ var bundler = require('./bundler');
 var goDeploy = function(context, bundlePath, remoteBundlePath, userScript, connectOptions) {
   return new Promise(function(resolve, reject) {
     if (! connectOptions.username)
-      return reject(new Error("Please set a username!"));
+      return reject(new Error("Please set a user in the config!"));
     var pkgPath = '~/package';
     var conn = new Connection();
     conn.on('ready', function() {

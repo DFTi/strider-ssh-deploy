@@ -25,7 +25,7 @@ describe("deploy", function() {
   describe("connect", function() {
     describe("when three hosts configured", function() {
       beforeEach(function() {
-        config = { hosts: ['1'], username: "test" };
+        config = { hosts: ['1'], user: "test" };
         context = {
           comment:sinon.stub(),
           job: { project: { name: "foo" } }
