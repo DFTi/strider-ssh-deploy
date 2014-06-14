@@ -34,6 +34,8 @@ var bundler = require('./bundler');
 
 var goDeploy = function(context, bundlePath, remoteBundlePath, userScript, connectOptions) {
   return new Promise(function(resolve, reject) {
+    if (! connectOptions.username)
+      return reject(new Error("Please set a username!"));
     var pkgPath = '~/package';
     var conn = new Connection();
     conn.on('ready', function() {
