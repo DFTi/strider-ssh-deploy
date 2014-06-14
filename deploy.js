@@ -51,7 +51,7 @@ var goDeploy = function(context, bundlePath, remoteBundlePath, userScript, conne
       conn.sftp(function (err, sftp) {
         if (err) throw err;
         var writeStream = sftp.createWriteStream(remoteBundlePath);
-        var str = progress({time:100, length: fs.statSync(bundlePath).size});
+        var str = progress({time:250, length: fs.statSync(bundlePath).size});
         str.on('progress', function (info) { context.comment(info.percentage+"%") });
         fs.createReadStream(bundlePath).pipe(str)
         .pipe(writeStream).on('close', function () {
@@ -96,7 +96,7 @@ module.exports = {
       var bundle = context.job.project.name.replace('/', '_')+'.tar.gz';
       var bundlePath = '/tmp/'+bundle;
       context.comment("Bundling project...");
-      bundler.bundleProject(bundlePath, function(progress) {
+      bundler.bundleProject(context.dataDir, bundlePath, function(progress) {
         context.comment(progress.percentage+"%");
       }, function() {
         context.comment("Created bundle "+bundlePath);

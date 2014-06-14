@@ -1,19 +1,14 @@
 var _ = require('lodash');
+var fs = require('fs');
 
 module.exports = {
   // This is how you would bundle a NODE.JS project...
-  bundleProject: function(bundlePath, progress, done) {
-    var progressEmitter = false;
-    if (_.isFunction(progress)) {
-      var progstream = require('progress-stream');
-      progressEmitter = progstream({
-        time:100,
-        length: require('fs').statSync(bundlePath).size
-      });
-      progressEmitter.on('progress', progress);
-    }
-    var bundleStream = require('npmd-pack')(context.dataDir, {})
+  bundleProject: function(dataDir, bundlePath, progress, done) {
+    var progstream = require('progress-stream');
+    progressEmitter = progstream({ time:250 });
+    progressEmitter.on('progress', progress);
+    require('npmd-pack')(dataDir, {})
+    .pipe(progressEmitter)
     .pipe(fs.createWriteStream(bundlePath)).on('finish', done);
-    if (progressEmitter) bundleStream.pipe(progressEmitter);
   }
 }
