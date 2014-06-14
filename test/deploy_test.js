@@ -12,7 +12,7 @@ describe("deploy", function() {
   var config = null, context = null;
 
   beforeEach(function() {
-    sinon.stub(bundler, 'bundleProject').yields();
+    sinon.stub(bundler, 'bundleProject').callsArg(2);
   });
 
   afterEach(function() {

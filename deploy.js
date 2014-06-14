@@ -40,13 +40,8 @@ var getConnectionOptions = function(config) {
 
 var bundler = require('./bundler');
 
-// function (info) { context.comment(info.percentage+"%") });
-
-
-
-var goDeploy = function(bundlePath, remoteBundlePath, userScript) {
+var goDeploy = function(context, bundlePath, remoteBundlePath, userScript, connectOptions) {
   var pkgPath = '~/package';
-
   context.comment("Preparing to deploy...");
   var conn = new Connection();
   conn.on('ready', function() {
@@ -101,11 +96,13 @@ module.exports = {
 
       context.comment("Bundling project...");
 
-      bundler.bundleProject(bundlePath, function() {
+      bundler.bundleProject(bundlePath, function(progress) {
+        context.comment(progress.percentage+"%");
+      }, function() {
         context.comment("Created bundle "+bundlePath);
-        _.each(connectionOptions, function(config) {
+        _.each(targets, function(ssh) {
           context.comment('Transferring bundle to '+remoteBundlePath);
-          goDeploy(bundlePath, remoteBundlePath, config.script);
+          goDeploy(context, bundlePath, remoteBundlePath, config.script, ssh);
         })
       })
     }
