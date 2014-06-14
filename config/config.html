@@ -1,28 +1,44 @@
-<div id="project_config_deploy" class="well">
-  <fieldset>
-    <legend>Configuration</legend>
-    <label for="user">Deploy User</label>
-    <input type="text" class="span2"
-    name="user" ng-model="config.user">
-    <br>
-    <label for="hosts">Host(s) (one one each line)</label>
-    <textarea type="text" class="span4"
-    name="hosts" ng-model="config.hosts">
-  </fieldset>
+<h3>Configuration</h3>
+<h4>User</h4>
+<p>
+  Specify here the username to use during SSH.
+</p>
+<input type="text" class="span2" name="user" ng-model="config.user" placeholder="deploy">
 
-  <fieldset>
-    <legend>Customization</legend>
-    <label for="script">Remote Commands</label>
-    <textarea name="script" ng-model="config.script"></textarea>
-  </fieldset>
-  <button class="btn btn-success" ng-click="save()" ng-disabled="saving">Save</button>
-  <button class="btn btn-info" ng-click="help()">Help</button>
+<h4>Hosts</h4>
+<p>
+  Specify here which hosts to connect to during deployment.
+  Ensure that the private key of your strider worker(s) exist and are authorized.
+</p>
+<ul class="hosts unstyled">
+  <li ng-repeat="item in config.hosts">
+    <i class="icon-remove" ng-click="removeHost($index)"></i>
+    [[ item ]]
+  </li>
+  <li ng-hide="config.hosts.length">You must add at least one host in order to deploy!</li>
+</ul>
+<div class="form-inline">
+  <input placeholder="staging.example.com" ng-model="new_host">
+  <button class="btn btn-primary" ng-disabled="!new_host" ng-click="addHost()">Add</button>
 </div>
 
-<div id="ssh_deploy_help" class="modal hide fade" role="dialog" aria-hidden="true">
-  <div class="modal-body"> 
-    Ensure that your strider worker(s) have public key ssh access to the deploy host(s). 
-    Your source code will be cloned into the deploy user's home directory.
-    Remote commands execute as the deploy user within the source directory.
+
+<br/>
+<h3>Deploy</h3>
+<div class="row-fluid">
+  <div class="span12">
+    <p class="help-text">
+      Remote commands execute from within the user's home directory.
+      Your project will have already been copied into the remote host at <code>$HOME/package</code>.
+      The previous source code will be saved into <code>$HOME/package.previous</code>.
+      Anything older than that will have already been removed.
+    </p>
   </div>
 </div>
+<div class="row-fluid">
+  <div class="span12">
+    <textarea ui-refresh="selectedTab" ui-codemirror="{theme: 'twilight', mode: 'shell', lineNumbers: true}" ng-model="config.deploy"># put your shell code here</textarea>
+  </div>
+</div>
+<br/>
+<button ng-click="save()" class="btn btn-primary">Save</button>
