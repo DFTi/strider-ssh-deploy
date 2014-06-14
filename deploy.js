@@ -101,11 +101,13 @@ module.exports = {
         context.comment(progress.percentage+"%");
       }, function() {
         context.comment("Created bundle "+bundlePath);
-        Promise.all(_.map(targets, function(sshOpts) {
+        var promises = _.map(targets, function(sshOpts) {
           return goDeploy(context, bundlePath, '~/'+bundle, config.script, sshOpts);
-        })).then(function() {
+        });
+        Promise.all(promises).then(function() {
           done(0);
         }).catch(function(err) {
+          context.comment(err.message);
           done(-1);
         })
       })
