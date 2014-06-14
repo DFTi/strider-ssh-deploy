@@ -92,8 +92,7 @@ var goDeploy = function(context, bundlePath, remoteBundlePath, userScript, conne
 module.exports = {
   configure: function(config, done) {
     return function(context, done) {
-      var privateKey = getPrivateKey(config.privateKey);
-      var targets = getConnectionOptions(config, privateKey);
+      var targets = getConnectionOptions(config, getPrivateKey(config.privateKey));
       var bundle = context.job.project.name.replace('/', '_')+'.tar.gz';
       var bundlePath = '/tmp/'+bundle;
       context.comment("Bundling project...");
