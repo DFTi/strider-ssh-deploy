@@ -7,7 +7,8 @@
     "test": "mocha -R spec --recursive test",
     "tdd": "mocha -w -R spec --recursive test",
     "build": "browserify controller.js -o config/config.js",
-    "watch": "watchify controller.js -o config/config.js"
+    "watch": "watchify controller.js -o config/config.js",
+    "coverage": "istanbul cover node_modules/mocha/bin/_mocha --recursive test"
   },
   "repository": {
     "type": "git",
