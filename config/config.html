@@ -28,10 +28,13 @@
 <div class="row-fluid">
   <div class="span12">
     <p class="help-text">
-      Remote commands execute from within the [[ config.user || "user" ]]'s home directory.
-      Your project will have already been copied into the remote host at <code>$HOME/package</code>.
-      The previous source code will be saved into <code>$HOME/package.previous</code>.
-      Anything older than that will have already been removed.
+    <ul>
+      <li>A tarball (sans node_modules/ and .git/) is transferred to <code>[[ paths.bundle ]]</code></li>
+      <li>If it exists, <code>[[ paths.old ]]</code> is deleted.</li>
+      <li>If it exists, <code>[[ paths.remote ]]</code> is renamed to <code>[[ paths.old ]]</code>.</li>
+      <li>The tarball is extracted into <code>[[ paths.remote ]]</code> for you automatically.</li>
+      <li>Shell code below will execute from [[ config.user || "user" ]]'s <code>$HOME</code> directory.</li>
+    </ul>
     </p>
   </div>
 </div>

@@ -1,4 +1,6 @@
 app.controller('SshDeployController', ['$scope', '$http', function ($scope, $http) {
+  var projectName = $scope.$parent.$parent.project.name;
+  $scope.paths = require('./remote_paths')(projectName.replace('/','_'));
   $scope.$watch('configs[branch.name].ssh_deploy.config', function (value) {
     $scope.config = value;
   });
