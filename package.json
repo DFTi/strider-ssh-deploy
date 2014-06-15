@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/DFTi/strider-ssh-deploy.git"
+    "url": "https://github.com/Strider-CD/strider-ssh-deploy.git"
   },
   "keywords": [
     "strider",
