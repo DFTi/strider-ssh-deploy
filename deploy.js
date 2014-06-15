@@ -27,17 +27,17 @@ module.exports = {
     return function(context, done) {
       getConnectionOptions(config, function(err, hosts) {
         if (err) return done(err);
-        context.comment("Bundling project...");
         var projectName = context.job.project.name.replace('/', '_');
-        var progress = function(info) { context.comment(info.percentage+"%") };
-        bundler.bundleProject(context.dataDir, projectName, progress, function(err, bundlePath) {
+        bundler.bundleProject(context.dataDir, projectName, function(tar) {
+          context.comment("Compressing ... "+tar.percentage+"%")
+        }, function(err, bundlePath) {
           if (err) {
             return done(new Error("Could not create bundle "+bundlePath))
           } else {
-            context.comment("Created bundle "+bundlePath);
             var promises = _.map(hosts, function(sshOpts) {
               return remotely.deploy(
-                context, projectName, bundlePath, config.script, sshOpts
+                context.out, projectName, bundlePath, config.script, sshOpts,
+                function(sftp) { context.comment("Uploading ... "+sftp.percentage+"%") }
               )
             });
             Promise.all(promises).then(function() {
