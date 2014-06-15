@@ -14,7 +14,7 @@ function prepare(paths) {
   ].join('\n')
 }
 
-function runScript(conn, script, out) {
+function runScript(conn, script, out, done) {
   conn.exec(script, function(err, stream) {
     if (err) throw err;
     stream
@@ -24,6 +24,7 @@ function runScript(conn, script, out) {
     .on('data', function(data) {
       out(data.toString());
     })
+    .on('exit', done);
   });
 }
 
@@ -34,6 +35,7 @@ module.exports = {
       if (! connectOptions.username)
         return reject(new Error("Please set a user in the config!"));
       var conn = new Connection();
+      var exitCode = -1;
       conn.on('ready', function() {
         conn.sftp(function (err, sftp) {
           if (err) throw err;
@@ -43,16 +45,24 @@ module.exports = {
           fs.createReadStream(localBundlePath).pipe(str)
           .pipe(writeStream)
           .on('close', function() {
-            runScript(conn, prepare(paths).concat(script), out);
+            runScript(conn, prepare(paths).concat(script), out, function(_exitCode) {
+              exitCode = _exitCode;
+            });
           })
         });
       }).on('error', function(err) {
         if ( /Authentication failure/.test(err.message) ) {
-          reject(new Error("Host "+connectOptions.host+" did not include your public key as an authorized key.\n"+keys.whatIsMyPublicKey()));
+          reject(new Error("Host "+connectOptions.host+" did not include your public key as an authorized key.\n"+require('./keys').whatIsMyPublicKey()));
         } else 
           reject(err);
-      }).on('close', function(had_error) {
-        had_error ? reject() : resolve()
+      }).on('close', function(hadError) {
+        console.log(hadError, exitCode);
+        if (hadError)
+          reject(new Error("Remote connection had errors.")); // should have rejected already
+        else if (exitCode !== 0)
+          reject(new Error("Remote script exited non-zero "+exitCode));
+        else
+          resolve();
       }).connect(connectOptions);
     })
   }
