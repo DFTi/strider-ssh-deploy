@@ -2,6 +2,7 @@ var fs = require('fs');
 var Connection = require('ssh2');
 var Promise = require('bluebird');
 var progress = require('progress-stream');
+var bundler = require('./bundler');
 
 function devnull(str) { return str+' > /dev/null 2>&1' };
 function prepare(paths) {
@@ -9,7 +10,7 @@ function prepare(paths) {
     devnull('rm -rf '+paths.old),
     devnull('mv '+paths.remote+' '+paths.old),
     devnull('mkdir '+paths.remote),
-    devnull('tar -zxf '+paths.bundle+' -C '+paths.remote+' --strip-components=1'),
+    devnull(bundler.untarCmd(paths.bundle, paths.remote)),
     '\n' // keep this newline so you can simply concat more onto this output
   ].join('\n')
 }

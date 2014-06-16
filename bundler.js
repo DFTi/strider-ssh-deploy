@@ -17,5 +17,8 @@ module.exports = {
           done(new Error("Failed to create project bundle"));
       })
     });
+  },
+  untarCmd: function(bundlePath, extractDir) {
+    return 'tar -zxf '+bundlePath+' -C '+extractDir+' --strip-components=1';
   }
 }
