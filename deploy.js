@@ -29,7 +29,7 @@ module.exports = {
         if (err) return done(err);
         var projectName = context.job.project.name.replace('/', '_');
         bundler.bundleProject(context.dataDir, projectName, function(tar) {
-          context.comment("Compressing ... "+tar.percentage+"%")
+          context.comment("Compressing ... "+Math.round(tar.percentage)+"%")
         }, function(err, bundlePath) {
           if (err) {
             return done(new Error("Could not create bundle "+bundlePath))
@@ -37,7 +37,7 @@ module.exports = {
             var promises = _.map(hosts, function(sshOpts) {
               return remotely.deploy(
                 context.out, projectName, bundlePath, config.script, sshOpts,
-                function(sftp) { context.comment("Uploading ... "+sftp.percentage+"%") }
+                function(sftp) { context.comment("Uploading ... "+Math.round(sftp.percentage)+"%") }
               )
             });
             Promise.all(promises).then(function() {
